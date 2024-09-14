@@ -1,0 +1,92 @@
+from datetime import datetime, timedelta
+from statistics import median
+
+expenses = {
+    "2023-01": {
+        "01": {
+            "food": [22.11, 43, 11.72, 2.2, 36.29, 2.5, 19],
+            "fuel": [210.22]
+        },
+        "09": {
+            "food": [11.9],
+            "fuel": [190.22]
+        }
+    },
+    "2023-03": {
+        "07": {
+            "food": [20, 11.9, 30.20, 11.9]
+        },
+        "04": {
+            "food": [10.20, 11.50, 2.5],
+            "fuel": []
+        }
+    },
+    "2023-04": {}
+}
+
+
+def get_first_sunday_of_the_month(year, month):
+    """ Helper function to get the first Sunday of each month """
+    d = datetime(year, month, 7)
+    offset = -d.weekday() - 1
+
+    return (d + timedelta(offset)).date()
+
+def quickselect(arr, k):
+    """ Helper function to get the k-th smallest element using Quickselect algorithm """
+    if len(arr) == 1:
+        return arr[0]
+# middle element of arr:
+    pivot = arr[len(arr) // 2]
+# elements smaller than pivot:
+    lows = [x for x in arr if x < pivot]
+# elements larger than pivot:
+    highs = [x for x in arr if x > pivot]
+# elements equal to pivot:
+    pivots = [x for x in arr if x == pivot]
+
+# if k is smaller than lows size, then k-th smallest element has to be in lows: 
+    if k < len(lows):
+        return quickselect(lows, k)
+# if k is between size of the lows and size of the pivots, then k-th smallest element has to be in pivots: 
+    elif k < len(lows) + len(pivots):
+        return pivots[0]
+# if k is larger than size lows + pivots, then k-th smallest element has to be in highs: 
+    else:
+        return quickselect(highs, k - len(lows) - len(pivots))
+
+
+def solution(expenses):
+    """ Determines mediana of spendings in a given month up to and including the first Sunday of that month, using the Quickselect algorithm """ 
+    all_medians = {}
+
+    for key1, value1 in expenses.items():
+        year, month = map(int, key1.split('-'))
+        first_sunday_of_a_month = get_first_sunday_of_the_month(year, month)
+        total_spendings = []
+# create a date in a date format yy-mm-dd:
+        for key2, value2 in value1.items():
+            full_date = datetime.strptime(
+                (key1 + "-" + key2), '%Y-%m-%d').date()
+# calculate mediana for total_spendings:
+            if full_date <= first_sunday_of_a_month:
+                for key3, value3 in value2.items():
+                    total_spendings.extend(value3)
+                    if total_spendings:
+                        n = len(total_spendings)
+                        if n % 2 == 1:
+# for odd number of elements, find middle element: 
+                            median = quickselect(total_spendings, n // 2)
+# for even number of elements, find average of two middle elements: 
+                        else:
+                            left = quickselect(total_spendings, n // 2 - 1)
+                            right = quickselect(total_spendings, n // 2)
+                            median = (left + right) / 2
+
+                        all_medians[key1] = median
+# if there were no spendings till the first Sunday of month, return None:
+        if not total_spendings:
+            result = None
+            all_medians[key1] = result
+
+    return all_medians
